@@ -14,20 +14,18 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Bot
 {
     public class Program
     {
         public readonly EventId BotEventId = new EventId(42, "HomeBot");
-
+        
         public DiscordClient Client { get; set; }
         public CommandsNextExtension Commands { get; set; }
         public VoiceNextExtension Voice { get; set; }
         public LavalinkExtension Lavalink { get; set; }
-
-        //public LavalinkService LavalinkService { get; set; }
-        //public MusicService MusicService { get; set; }
 
         public static void Main(string[] args)
         {
@@ -41,7 +39,7 @@ namespace Bot
             using (var fs = File.OpenRead("conf.json"))
             using (var sr = new StreamReader(fs, new UTF8Encoding(false)))
                 json = await sr.ReadToEndAsync();
-
+            
             var cfgjson = JsonConvert.DeserializeObject<BotConfig>(json);
             var cfg = new DiscordConfiguration()
             {
@@ -54,6 +52,8 @@ namespace Bot
             };
 
             this.Client = new DiscordClient(cfg);
+
+            
 
             this.Client.Ready += this.Client_Ready;
             this.Client.GuildAvailable += this.Client_GuildAvailable;
@@ -88,27 +88,21 @@ namespace Bot
 
             this.Commands.CommandExecuted += this.Commands_CommandExecuted;
             this.Commands.CommandErrored += this.Commands_CommandErrored;
-
-            //this.Commands.RegisterCommands<VoiceCommandModule>();
+            
 
             this.Voice = this.Client.UseVoiceNext();
 
             this.Lavalink = this.Client.UseLavalink();
 
-
-
             this.Commands.RegisterCommands<MusicCommandModule>();
-
 
             await this.Client.ConnectAsync();
             await this.Lavalink.ConnectAsync(lavalinkConfig);
 
-            //this.LavalinkService = new LavalinkService(cfgjson, this.Client);
-            //this.MusicService = new MusicService(LavalinkService);
-
-
             await Task.Delay(-1);
         }
+
+        
 
         #region -- Логи --
         private Task Client_Ready(DiscordClient sender, ReadyEventArgs e)
